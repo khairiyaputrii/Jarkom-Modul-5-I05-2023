@@ -7,3 +7,12 @@ Group Members:
 | ---       |   ---     |---  |
 |     1     |     Khairiya Maisa Putri    | 5025211192 |
 |     2     |     Talitha Hayyinas Sahala    |  5025211263 |
+
+## Group Preifx IP
+```10.61```
+
+## Topologi GNS3
+![TopologiGNS](img/Topologi.png)
+
+## Topologi VLSM
+![vlsm](img/vlsm.png)
