@@ -16,3 +16,6 @@ Group Members:
 
 ## Topologi VLSM
 ![vlsm](img/vlsm.png)
+
+## VLSM TREE
+![vlsmtree](img/VLSMTREEM5.png)
