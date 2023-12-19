@@ -18,4 +18,4 @@ Group Members:
 ![vlsm](img/vlsm.png)
 
 ## VLSM TREE
-![vlsmtree](img/VLSMTREEM5.png)
+![vlsmtree](img/VLSMTREEM5.jpg)
