@@ -541,7 +541,7 @@ Explanation
 - `-s 10.61.x.x`: Specifies permitted source addresses. In this case, only traffic originating from IP addresses starting with 10.61.x.x is allowed through.
 - `-j ACCEPT`: Specifies the action to take if the packet meets the rule criteria, in this case accept the packet.
 - `-j DROP`: Specifies the action to be taken if the packet meets the rule criteria, in this case rejecting (DROP) the packet.
-So, this rule allows TCP traffic going to port 22 (SSH) from IP addresses starting with 192.173.x.x to be received. This rule denies all TCP traffic going to port 22 (SSH). This conflicts with previous rules that allowed SSH traffic from certain IP addresses. Therefore, this rule is a "general disallow" for SSH traffic that does not comply with the first rule.
+So, this rule allows TCP traffic going to port 22 (SSH) from IP addresses starting with 10.61.x.x to be received. This rule denies all TCP traffic going to port 22 (SSH). This conflicts with previous rules that allowed SSH traffic from certain IP addresses. Therefore, this rule is a "general disallow" for SSH traffic that does not comply with the first rule.
 
 ## No 5
 
@@ -565,6 +565,9 @@ So, this rule allows incoming traffic (INPUT) only during the time range between
 
 ## No 6
 
+> Lalu, karena ternyata terdapat beberapa waktu di mana network administrator dari WebServer tidak bisa stand by, sehingga perlu ditambahkan rule bahwa akses pada hari Senin - Kamis pada jam 12.00 - 13.00 dilarang (istirahat maksi cuy) dan akses di hari Jumat pada jam 11.00 - 13.00 juga dilarang (maklum, Jumatan rek).
+
+
 To limit the connection time, ```iptables``` on the Web Server (Sein and Stark) needs to define the hours when it can be connected or dropped. Here, we will block the connection during the lunch break on **weekdays** from ```Senin - Kamis``` at ```12:00 - 13:00``` and from ```11:00 - 13:00``` on ```Fridays```. You can use the following command:
 
 ```
@@ -585,11 +588,70 @@ iptables -I INPUT 4 -m time --timestart 11:00 --timestop 13:00 --weekdays Fri -j
 So, this rule rejects INPUT traffic on Monday through Thursday between 12:00 PM and 1:00 PM. It also rejects INPUT traffic on Friday between 11:00 AM and 1:00 PM.
 
 ## No 7
+> Karena terdapat 2 WebServer, kalian diminta agar setiap client yang mengakses Sein dengan Port 80 akan didistribusikan secara bergantian pada Sein dan Stark secara berurutan dan request dari client yang mengakses Stark dengan port 443 akan didistribusikan secara bergantian pada Sein dan Stark secara berurutan.
+
+To work on question 7, it is necessary to set up the web server first. First, it is required to configure the ports.conf as follows:
+
+```sh
+echo '
+Listen 80
+Listen 443
+
+<IfModule ssl_module>
+        Listen 443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+        Listen 443
+</IfModule>
+' > /etc/apache2/ports.conf
+```
+Then create a page or a simple **initialization** that indicates it is a message from that **node**.
+
+```sh
+echo '# Sein | Stark
+Sein | Stark nih' > /var/www/html/index.html
+```
+
+After allowing the **HTTPS port**, it's time to configure by creating a simple web server as follows:
+
+```sh
+echo "
+<VirtualHost *:80>
+    ServerName 10.61.4.2
+    DocumentRoot /var/www/html
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+<VirtualHost *:443>
+    ServerName 10.61.4.2
+    DocumentRoot /var/www/html
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+" > /etc/apache2/sites-available/sein.conf
+
+a2ensite sein.conf
+service apache2 restart
+```
+
+After that, perform ```iptables``` on the **router** that leads to the **web servers**, namely Sein and Stark, as follows:
+
+```
+iptables -A PREROUTING -t nat -p tcp --dport 80 -d 10.61.4.2 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.61.4.2:80
+iptables -A PREROUTING -t nat -p tcp --dport 80 -d 10.61.4.2 -j DNAT --to-destination 10.61.1.118:80
+iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.61.1.118 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.61.1.118:443
+iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.61.1.118 -j DNAT --to-destination 10.61.4.2:443
+```
 
 ## No 8
+> Karena berbeda koalisi politik, maka subnet dengan masyarakat yang berada pada Revolte dilarang keras mengakses WebServer hingga masa pencoblosan pemilu kepala suku 2024 berakhir. Masa pemilu (hingga pemungutan dan penghitungan suara selesai) kepala suku bersamaan dengan masa pemilu Presiden dan Wakil Presiden Indonesia 2024.
 
 ## No 9
+> Sadar akan adanya potensial saling serang antar kubu politik, maka WebServer harus dapat secara otomatis memblokir  alamat IP yang melakukan scanning port dalam jumlah banyak (maksimal 20 scan port) di dalam selang waktu 10 menit. 
+(clue: test dengan nmap)
+
 
 ## No 10
-
+> Karena kepala suku ingin tau paket apa saja yang di-drop, maka di setiap node server dan router ditambahkan logging paket yang di-drop dengan standard syslog level. 
 
