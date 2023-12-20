@@ -659,11 +659,56 @@ iptables -A INPUT -p tcp --dport 80 -s 10.61.1.104/30 -m time --datestart 2023-1
 - ```-m time --datestart 2023-12-10 --datestop 2024-02-15```: Uses the time module to establish rules based on dates. This rule will be in effect from December 10, 2023, to February 15, 2024.
 - ```-j DROP```: Specifies the action taken if a packet meets the rule criteria, in this case, dropping (DROP) the packet.
 
-
 ## No 9
 > Sadar akan adanya potensial saling serang antar kubu politik, maka WebServer harus dapat secara otomatis memblokir  alamat IP yang melakukan scanning port dalam jumlah banyak (maksimal 20 scan port) di dalam selang waktu 10 menit. 
 (clue: test dengan nmap)
 
+Because in question 9, we need to use port scanning, a special chain called ```"portscan"``` is required. This chain can be used to manage rules related to port scanning detection.
+
+```
+iptables -N portscan
+
+iptables -A INPUT -m recent --name portscan --update --seconds 600 --hitcount 20 -j DROP
+iptables -A FORWARD -m recent --name portscan --update --seconds 600 --hitcount 20 -j DROP
+
+iptables -A INPUT -m recent --name portscan --set -j ACCEPT
+iptables -A FORWARD -m recent --name portscan --set -j ACCEPT
+```
+
+```iptables -N portscan```: This creates a special chain named "portscan." This chain can be used to manage rules related to port scanning detection.
+
+```
+iptables -A INPUT -m recent --name portscan --update --seconds 600 --hitcount 20 -j DROP
+```
+
+- ```-m recent --name portscan```: Uses the recent module to track connections or packets.
+- ```--update```: Updates information about the current packet.
+- ```--seconds 600```: Sets the time in seconds, in this case, 600 seconds (10 minutes).
+- ```--hitcount 20```: Sets the number of hits (updates) required to trigger the next action.
+- ```-j DROP```: Specifies the action taken if the rule criteria are met, in this case, dropping (DROP) the packet.
+
+So, this rule will drop INPUT packets if more than 20 updates occur within a 10-minute period, which can be considered an indication of a port scanning attack.
+
+```
+iptables -A FORWARD -m recent --name portscan --update --seconds 600 --hitcount 20 -j DROP
+```
+
+Adding a rule to the FORWARD chain. Similar to the previous rule, this rule handles packets that pass through the system, i.e., forwarded packets. If the number of packet updates exceeds 20 within 10 minutes, the packet will be rejected.
+
+```
+iptables -A INPUT -m recent --name portscan --set -j ACCEPT
+```
+- ```-m recent --name portscan```: Uses the recent module to track connections or packets.
+- ```--set```: Sets information related to the new packet.
+- ```-j ACCEPT```: Specifies the action taken if the rule criteria are met, in this case, accepting the packet.
+
+So, this rule allows new INPUT packets to pass through and sets information that indicates that this packet is not related to a port scanning attack.
+
+```
+iptables -A FORWARD -m recent --name portscan --set -j ACCEPT
+```
+
+Adding a rule to the FORWARD chain. Similar to the previous rule, this rule allows forwarded packets to pass through and sets information indicating that these packets are not related to a port scanning attack.
 
 ## No 10
 > Karena kepala suku ingin tau paket apa saja yang di-drop, maka di setiap node server dan router ditambahkan logging paket yang di-drop dengan standard syslog level. 
