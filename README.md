@@ -19,3 +19,8 @@ Group Members:
 
 ## VLSM TREE
 ![vlsmtree](img/VLSMTREEM5.jpg)
+
+## Route
+The following is the route that we have created from the results of the VLSM topology as follows
+![vlsmtree]()
+
