@@ -647,6 +647,19 @@ iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.61.1.118 -j DNAT --to-des
 ## No 8
 > Karena berbeda koalisi politik, maka subnet dengan masyarakat yang berada pada Revolte dilarang keras mengakses WebServer hingga masa pencoblosan pemilu kepala suku 2024 berakhir. Masa pemilu (hingga pemungutan dan penghitungan suara selesai) kepala suku bersamaan dengan masa pemilu Presiden dan Wakil Presiden Indonesia 2024.
 
+To work on this number, the assistance of ```--datestart``` and ```--datestop``` is required to restrict access on specific days. Here, the **subnet** from **Revolte** is needed because the desired restriction is against the subnet. Our **subnet** here is located on A10, with the IP ```10.61.1.104/30```, and determining the protocol used as follows:
+
+```
+iptables -A INPUT -p tcp --dport 80 -s 10.61.1.104/30 -m time --datestart 2023-12-10 --datestop 2024-02-15 -j DROP
+```
+- ```-A INPUT```: Adds a rule to the INPUT chain (chain used for traffic directed towards the system).
+- ```-p tcp```: Specifies the protocol used, in this case, TCP.
+- ```--dport 80```: Specifies the destination port, in this case, port 80 (commonly used for HTTP services).
+- ```-s 10.61.1.104/30```: Specifies the allowed source address. In this case, only traffic originating from the IP range 10.61.1.104 to 10.61.1.107 (10.61.1.104/30) is permitted to enter.
+- ```-m time --datestart 2023-12-10 --datestop 2024-02-15```: Uses the time module to establish rules based on dates. This rule will be in effect from December 10, 2023, to February 15, 2024.
+- ```-j DROP```: Specifies the action taken if a packet meets the rule criteria, in this case, dropping (DROP) the packet.
+
+
 ## No 9
 > Sadar akan adanya potensial saling serang antar kubu politik, maka WebServer harus dapat secara otomatis memblokir  alamat IP yang melakukan scanning port dalam jumlah banyak (maksimal 20 scan port) di dalam selang waktu 10 menit. 
 (clue: test dengan nmap)
