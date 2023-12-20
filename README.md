@@ -713,3 +713,52 @@ Adding a rule to the FORWARD chain. Similar to the previous rule, this rule allo
 ## No 10
 > Karena kepala suku ingin tau paket apa saja yang di-drop, maka di setiap node server dan router ditambahkan logging paket yang di-drop dengan standard syslog level. 
 
+To enable LOGGING, we need to add iptables Log rules before the rules already created in number 9.
+
+```
+iptables -I INPUT -m recent --name portscan --update --seconds 600 --hitcount 20 -j LOG --log-prefix "Portscan detected: " --log-level 4
+
+iptables -I FORWARD -m recent --name portscan --update --seconds 600 --hitcount 20 -j LOG --log-prefix "Portscan detected: " --log-level 4
+```
+
+```
+iptables -I INPUT -m recent --name portscan --update --seconds 600 --hitcount 20 -j
+```
+and
+```
+iptables -I FORWARD -m recent --name portscan --update --seconds 600 --hitcount 20 -j
+```
+
+Having the same rules concept as in number 9, the difference is that we need to add the parameter ```LOG --log-prefix "Portscan detected: " --log-level 4``` to direct packets that meet the rule for logging.
+
+- ```-j LOG```: Used for logging.
+- ```--log-prefix "Portscan detected: "```: Adds a prefix to the log, specifically the text "Portscan detected: {log content}".
+- ```--log-level 4```: Specifies the level of logging in syslog, where level 4 means 'Warning'.
+
+Because in the previous log, we set the log level to 4 (warning), we then need to configure the ```etc/rsyslog.d/50-default.conf``` file to add the configuration ```kernel.warning -/var/log/iptables.log```. The configuration should look like the one below.
+
+```
+
+#
+# First some standard log files.  Log by facility.
+#
+auth,authpriv.*                 /var/log/auth.log
+*.*;auth,authpriv.none          -/var/log/syslog
+#cron.*                         /var/log/cron.log
+#daemon.*                       -/var/log/daemon.log
+kern.*                          -/var/log/kern.log
+kernel.warning                  -/var/log/iptables.log
+#lpr.*                          -/var/log/lpr.log
+mail.*                          -/var/log/mail.log
+#user.*                         -/var/log/user.log
+
+#
+# Logging for the mail system.  Split it up so that
+# it is easy to write scripts to parse these files.
+#
+#mail.info                      -/var/log/mail.info
+#mail.warn                      -/var/log/mail.warn
+mail.err                        /var/log/mail.err
+```
+
+Once done, we need to execute the command ```touch /var/log/iptables.log``` and run ```/etc/init.d/rsyslog restart``` to restart syslog so that the new configuration can be applied to syslog, and the log results can go into iptables.log.
