@@ -563,14 +563,33 @@ Explanation
 - `-j REJECT`: Specifies the action to be taken if the packet does not meet the rule criteria, in this case rejecting (REJECT) the packet.
 So, this rule allows incoming traffic (INPUT) only during the time range between 08:00 to 16:00 on Monday to Friday. This rule also rejects all traffic that does not comply with the previous rule. This includes traffic outside the time range or on days that do not fall within Monday to Friday.
 
+## No 6
 
+To limit the connection time, ```iptables``` on the Web Server (Sein and Stark) needs to define the hours when it can be connected or dropped. Here, we will block the connection during the lunch break on **weekdays** from ```Senin - Kamis``` at ```12:00 - 13:00``` and from ```11:00 - 13:00``` on ```Fridays```. You can use the following command:
 
+```
+iptables -I INPUT 3 -m time --timestart 12:00 --timestop 13:00 --weekdays Mon,Tue,Wed,Thu -j REJECT
+iptables -I INPUT 4 -m time --timestart 11:00 --timestop 13:00 --weekdays Fri -j REJECT
+```
 
+- ```-I INPUT 3 / 4```: Adds a rule to the INPUT chain (the chain used for traffic directed towards the system) and places it at index 3 or 4.
+- ```-m time```: Uses the time module to establish rules based on time.
+- ```--timestart 12:00```: Specifies the start time, in this case, 12:00 PM.
+- ```--timestop 13:00```: Specifies the end time, in this case, 1:00 PM.
+- ```--weekdays Mon,Tue,Wed,Thu```: Specifies the days on which this rule is valid, in this case, Monday through Thursday.
+- ```--timestart 11:00```: Specifies the start time, in this case, 11:00 AM.
+- ```--timestop 13:00```: Specifies the end time, in this case, 1:00 PM.
+- ```--weekdays Fri```: Specifies the day on which this rule is valid, in this case, Friday.
+- ```-j REJECT```: Specifies the action taken if a packet meets the rule criteria, in this case, rejecting (REJECT) the packet.
 
+So, this rule rejects INPUT traffic on Monday through Thursday between 12:00 PM and 1:00 PM. It also rejects INPUT traffic on Friday between 11:00 AM and 1:00 PM.
 
+## No 7
 
+## No 8
 
+## No 9
 
-
+## No 10
 
 
